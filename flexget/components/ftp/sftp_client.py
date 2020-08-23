@@ -282,8 +282,8 @@ class SftpClient:
     def _download_file(self, destination: str, delete_origin: bool, source: str, filename: str) -> None:
 
         destination_path: str = self._get_download_path(source, destination)
-            if filename:
-                destination_path: str = self._get_download_path(filename, destination)
+        if filename:
+            destination_path: str = self._get_download_path(filename, destination)
         destination_dir: str = Path(destination_path).parent.as_posix()
 
         if Path(destination_path).exists():
