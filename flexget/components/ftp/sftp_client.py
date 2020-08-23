@@ -89,7 +89,7 @@ class SftpClient:
 
         return entries
 
-    def download(self, source: str, to: str, recursive: bool, delete_origin: bool) -> None:
+    def download(self, source: str, to: str, recursive: bool, delete_origin: bool, filename: str) -> None:
         """
         Downloads the file specified in "source" to the destination specified in "to"
         :param source: path of the resource to download
@@ -111,7 +111,7 @@ class SftpClient:
             source_dir: str = parsed_path.parent.as_posix()
             try:
                 self._sftp.cwd(source_dir)
-                self._download_file(to, delete_origin, source_file)
+                self._download_file(to, delete_origin, source_file, filename)
             except Exception as e:
                 raise SftpError(f'Failed to download file {source} ({str(e)})')
 
@@ -279,9 +279,11 @@ class SftpClient:
         except Exception as e:
             raise SftpError(f'Failed to upload {source} ({str(e)})')
 
-    def _download_file(self, destination: str, delete_origin: bool, source: str) -> None:
+    def _download_file(self, destination: str, delete_origin: bool, source: str, filename: str) -> None:
 
         destination_path: str = self._get_download_path(source, destination)
+            if filename:
+                destination_path: str = self._get_download_path(filename, destination)
         destination_dir: str = Path(destination_path).parent.as_posix()
 
         if Path(destination_path).exists():
