@@ -132,6 +132,7 @@ class SftpDownload:
     to:                  Destination path; supports Jinja2 templating on the input entry. Fields such
                          as series_name must be populated prior to input into this plugin using
                          metainfo_series or similar.
+    filename:            Specifies the filename to use for the downloaded content
     recursive:           Indicates whether to download directory contents recursively.
     delete_origin:       Indicates whether to delete the remote files(s) once they've been downloaded.
     socket_timeout_sec:  Socket timeout in seconds
@@ -148,6 +149,7 @@ class SftpDownload:
         'type': 'object',
         'properties': {
             'to': {'type': 'string', 'format': 'path'},
+            'filename': {'type': 'string', 'default': ''},
             'recursive': {'type': 'boolean', 'default': True},
             'delete_origin': {'type': 'boolean', 'default': False},
             'socket_timeout_sec': {'type': 'integer', 'default': DEFAULT_SOCKET_TIMEOUT_SEC},
@@ -165,10 +167,11 @@ class SftpDownload:
         path: str = unquote(urlparse(entry['url']).path) or '.'
         delete_origin: bool = config['delete_origin']
         recursive: bool = config['recursive']
-        to: str = config['to']
+        to: str = render_from_entry(config['to'], entry)
+        filename: str = render_from_entry(config['filename'], entry)
 
         try:
-            sftp.download(path, to, recursive, delete_origin)
+            sftp.download(path, to, recursive, delete_origin, filename)
         except SftpError as e:
             entry.fail(e)  # type: ignore
 
