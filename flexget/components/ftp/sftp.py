@@ -141,6 +141,7 @@ class SftpDownload:
 
       sftp_download:
           to: '/Volumes/External/Drobo/downloads'
+          filename: 'example.mkv'
           delete_origin: False
     """
 
@@ -148,6 +149,7 @@ class SftpDownload:
         'type': 'object',
         'properties': {
             'to': {'type': 'string', 'format': 'path'},
+            'filename': {'type': 'string', 'default': ''},
             'recursive': {'type': 'boolean', 'default': True},
             'delete_origin': {'type': 'boolean', 'default': False},
             'socket_timeout_sec': {'type': 'integer', 'default': DEFAULT_SOCKET_TIMEOUT_SEC},
@@ -166,9 +168,26 @@ class SftpDownload:
         delete_origin: bool = config['delete_origin']
         recursive: bool = config['recursive']
         to: str = config['to']
+        filename: str = config['filename']
+
+        if to:
+            try:
+                to = render_from_entry(to, entry)
+            except RenderError as e:
+                logger.error('Could not render path: {}', to)
+                entry.fail(str(e))  # type: ignore
+                return
+
+        if filename:
+            try:
+                filename = render_from_entry(filename, entry)
+            except RenderError as e:
+                logger.error('Could not render path: {}', to)
+                entry.fail(str(e))  # type: ignore
+                return
 
         try:
-            sftp.download(path, to, recursive, delete_origin)
+            sftp.download(path, to, filename, recursive, delete_origin)
         except SftpError as e:
             entry.fail(e)  # type: ignore
 
@@ -294,12 +313,21 @@ class SftpUpload:
     def handle_entry(cls, entry: Entry, sftp: SftpClient, config: dict):
 
         to: str = config['to']
+        filename: str = config['filename']
         location: str = entry['location']
         delete_origin: bool = config['delete_origin']
 
         if to:
             try:
                 to = render_from_entry(to, entry)
+            except RenderError as e:
+                logger.error('Could not render path: {}', to)
+                entry.fail(str(e))  # type: ignore
+                return
+
+        if filename:
+            try:
+                filename = render_from_entry(filename, entry)
             except RenderError as e:
                 logger.error('Could not render path: {}', to)
                 entry.fail(str(e))  # type: ignore
